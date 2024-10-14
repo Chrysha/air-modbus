@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 
@@ -195,12 +196,21 @@ func main() {
 	am := NewAirMonitor()
 	s := make(chan os.Signal)
 	signal.Notify(s, os.Interrupt, syscall.SIGTERM)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
 	go func() {
-		<-s
-		os.Exit(1)
+		defer wg.Done()
+		am.readAir()
 	}()
-	go am.readAir()
-	go am.handleAirData()
-	for {
-	}
+
+	go func() {
+		defer wg.Done()
+		am.handleAirData()
+	}()
+
+	<-s
+	fmt.Println("Received termination signal, shutting down...")
+	wg.Wait()
 }
