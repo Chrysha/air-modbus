@@ -49,7 +49,11 @@ func (am *AirMonitor) sub(client mqtt.Client) {
 }
 
 func (am *AirMonitor) readAir() {
-	var broker = "192.168.178.55"
+	broker := os.Getenv("BROKER_IP")
+	if broker == "" {
+		fmt.Println("BROKER_IP environment variable is not set")
+		return
+	}
 	var port = 1883
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(fmt.Sprintf("tcp://%s:%d", broker, port))
@@ -212,5 +216,10 @@ func main() {
 
 	<-s
 	fmt.Println("Received termination signal, shutting down...")
+
+	// Perform any necessary cleanup here
+
 	wg.Wait()
+	fmt.Println("All goroutines have finished, exiting.")
+	os.Exit(0)
 }
